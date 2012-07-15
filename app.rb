@@ -11,6 +11,8 @@ require 'json'
 require 'fileutils'
 require 'pp'
 
+require 'thumbnailer'
+
 config = File.join('config', 'dropbox.json')
 config = File.open(config) {|f| JSON.parse(f.read) }
 
@@ -23,20 +25,6 @@ use OmniAuth::Builder do
   provider :dropbox, config["DROPBOX_KEY"], config["DROPBOX_SECRET"]
 end
 
-module Dropbox
-  module API
-    class Client
-      
-      def ls_p(path_to_list = '')
-        ls(path_to_list)
-      rescue Dropbox::API::Error::NotFound
-        mkdir(path_to_list)
-        []
-      end
-    end
-  end
-end
-
 def ensure_user
   if session[:user]
     @user = session[:user]
@@ -47,43 +35,9 @@ def ensure_user
   halt(erb :master)
 end
 
-
-def make_thumbs(size)
-  thumbs_path = "thumbs/#{size}"
-  thumbs = @client.ls_p(thumbs_path).map {|f| f.path }
-  @client.ls.each do |f|
-    next unless f.thumb_exists
-    next if thumbs.include?(f.path)
-    @client.upload "#{thumbs_path}/#{f.path}", f.thumbnail(:size => size)
-  end  
-end
-
-def get_thumbs(size)
-  dict = {}
-  @client.ls_p("thumbs/#{size}").each { |t| dict[t.path] = t}
-  dict
-end
-
-def get_files_with_thumbs(opts)
-  opts[:size] ||= :medium
-  make_thumbs(opts[:size]) if opts[:make]
-  thumbs = get_thumbs(opts[:size])
-  files = opts[:path] ? @client.ls(opts[:path]) : @client.ls
-  
-  files.each do |f|
-    next unless f.thumb_exists
-    f['thumbs'] = {} unless f['thumbs']
-    thumb = thumbs["thumbs/#{opts[:size]}/#{f.path.split('/').pop}"]
-    next unless thumb
-    f['thumbs']['m'] = thumb.direct_url['url']
-  end
-
-  files
-end  
-
 get '/' do
   ensure_user
-  @files = get_files_with_thumbs(:size => :l, :make => false)
+  @files = @client.get_files_with_thumbs(:size => :l, :make => false)
   template = @client.download('template.html')
   Mustache.render(template,{
     :files => @files, 
