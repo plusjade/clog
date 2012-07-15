@@ -37,10 +37,15 @@ end
 
 get '/' do
   ensure_user
-  @files = @client.get_files_with_thumbs(:size => :l, :make => false)
+  
+  files = @client.get_images({
+    :path => 'images', 
+    :size => :l,
+    :make => false
+  })
   template = @client.download('template.html')
   Mustache.render(template,{
-    :files => @files, 
+    :files => files, 
     :username => @user['info']['name']
   })
 end
