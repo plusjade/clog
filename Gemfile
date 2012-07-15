@@ -11,5 +11,5 @@ gem "dropbox-api"
 #gem 'dropbox-sdk'
 gem 'omniauth'
 gem 'omniauth-dropbox'
-
+gem 'mustache'
 #gem 'omniauth-github'

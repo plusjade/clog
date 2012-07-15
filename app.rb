@@ -5,6 +5,7 @@ require 'sinatra'
 require 'omniauth'
 require 'omniauth-dropbox'
 require "dropbox-api"
+require 'mustache'
 require 'erb'
 require 'json'
 require 'fileutils'
@@ -82,9 +83,12 @@ end
 
 get '/' do
   ensure_user
-  @files = get_files_with_thumbs(:size => :l, :make => true)
-  @body = erb :home
-  erb :master
+  @files = get_files_with_thumbs(:size => :l, :make => false)
+  template = @client.download('template.html')
+  Mustache.render(template,{
+    :files => @files, 
+    :username => @user['info']['name']
+  })
 end
 
 # Support both GET and POST for callbacks
