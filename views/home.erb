@@ -1,0 +1,12 @@
+Haro, <%= @user['info']['name'] %> =)
+
+<ul>
+<% @files.each do |f| %>
+  <li>
+  <%= f['path'] %>
+  <% if f.thumb_exists %>
+    <img src="<%= f['thumbs']['m'] %>">
+  <% end %>
+  </li>
+<% end %>  
+</ul>
